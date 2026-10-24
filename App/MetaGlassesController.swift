@@ -108,30 +108,30 @@ final class MetaGlassesController: ObservableObject {
             session = newSession
             tokens.append(newSession.statePublisher.listen { [weak self] state in
                 Task { @MainActor in
-                    guard let self, sessionID == generation else { return }
+                    guard let self, self.sessionID == generation else { return }
                     switch state {
                     case .started:
-                        connected = true
-                        connecting = false
-                        attachCapabilities(generation: generation)
+                        self.connected = true
+                        self.connecting = false
+                        self.attachCapabilities(generation: generation)
                     case .paused:
-                        streaming = false
-                        onUnavailable?()
+                        self.streaming = false
+                        self.onUnavailable?()
                     case .stopped:
-                        disconnect()
+                        self.disconnect()
                     case .stopping:
-                        streaming = false
-                        onUnavailable?()
+                        self.streaming = false
+                        self.onUnavailable?()
                     default: break
                     }
                 }
             })
             tokens.append(newSession.errorPublisher.listen { [weak self] error in
                 Task { @MainActor in
-                    guard let self, sessionID == generation else { return }
-                    needsAppUpdate = error == .datAppOnTheGlassesUpdateRequired
-                    errorMessage = error.localizedDescription
-                    disconnect()
+                    guard let self, self.sessionID == generation else { return }
+                    self.needsAppUpdate = error == .datAppOnTheGlassesUpdateRequired
+                    self.errorMessage = error.localizedDescription
+                    self.disconnect()
                 }
             })
             timeoutTask = Task { [weak self] in
@@ -160,46 +160,46 @@ final class MetaGlassesController: ObservableObject {
             tokens.append(stream.videoFramePublisher.listen { [weak self] frame in
                 guard let image = frame.makeUIImage() else { return }
                 Task { @MainActor in
-                    guard let self, sessionID == generation else { return }
-                    lastFrameAt = ProcessInfo.processInfo.systemUptime
-                    preview = image
-                    onFrame?(image, false)
+                    guard let self, self.sessionID == generation, self.streaming else { return }
+                    self.lastFrameAt = ProcessInfo.processInfo.systemUptime
+                    self.preview = image
+                    self.onFrame?(image, false)
                 }
             })
             tokens.append(stream.statePublisher.listen { [weak self] state in
                 Task { @MainActor in
-                    guard let self, sessionID == generation else { return }
-                    streaming = state == .streaming
-                    if !streaming { onUnavailable?() }
-                    finishReadinessIfReady()
+                    guard let self, self.sessionID == generation else { return }
+                    self.streaming = state == .streaming
+                    if !self.streaming { self.onUnavailable?() }
+                    self.finishReadinessIfReady()
                 }
             })
             tokens.append(stream.photoDataPublisher.listen { [weak self] photo in
                 guard let image = UIImage(data: photo.data) else { return }
                 Task { @MainActor in
-                    guard let self, sessionID == generation, capturePending else { return }
-                    capturePending = false
-                    photoTimeoutTask?.cancel()
-                    preview = image
-                    onFrame?(image, true)
+                    guard let self, self.sessionID == generation, self.capturePending, self.streaming else { return }
+                    self.capturePending = false
+                    self.photoTimeoutTask?.cancel()
+                    self.preview = image
+                    self.onFrame?(image, true)
                 }
             })
             tokens.append(stream.errorPublisher.listen { [weak self] error in
                 Task { @MainActor in
-                    guard let self, sessionID == generation else { return }
-                    errorMessage = error.localizedDescription
-                    onUnavailable?()
+                    guard let self, self.sessionID == generation else { return }
+                    self.errorMessage = error.localizedDescription
+                    self.onUnavailable?()
                 }
             })
             let display = try session.addDisplay()
             self.display = display
             tokens.append(display.statePublisher.listen { [weak self] state in
                 Task { @MainActor in
-                    guard let self, sessionID == generation else { return }
-                    displayStarted = state == .started
-                    displayStatus = displayStarted ? "Lens connected" : "Lens: \(state)"
-                    if displayStarted { pumpDisplay() }
-                    finishReadinessIfReady()
+                    guard let self, self.sessionID == generation else { return }
+                    self.displayStarted = state == .started
+                    self.displayStatus = self.displayStarted ? "Lens connected" : "Lens: \(state)"
+                    if self.displayStarted { self.pumpDisplay() }
+                    self.finishReadinessIfReady()
                 }
             })
             display.start()

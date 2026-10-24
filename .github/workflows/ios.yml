@@ -44,8 +44,12 @@ jobs:
           CODE_SIGNING_ALLOWED=NO
       - name: Package unsigned build for inspection
         run: ditto -c -k --keepParent build/Build/Products/Debug-iphoneos/MetaStudy.app build/MetaStudy-unsigned.zip
+      - name: Launch in iPhone simulator
+        run: python3 scripts/simulator_smoke.py
       - uses: actions/upload-artifact@v4
         with:
           name: MetaStudy-unsigned-not-installable
-          path: build/MetaStudy-unsigned.zip
+          path: |
+            build/MetaStudy-unsigned.zip
+            build/MetaStudy-preview.png
           retention-days: 14
