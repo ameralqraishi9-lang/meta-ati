@@ -1,0 +1,6 @@
+// Developer Mode defaults. Local signing and production values stay untracked.
+PRODUCT_BUNDLE_IDENTIFIER = com.metatistudy.MetaStudy
+META_APP_ID = 0
+CLIENT_TOKEN =
+DEVELOPMENT_TEAM =
+#include? "Local.xcconfig"

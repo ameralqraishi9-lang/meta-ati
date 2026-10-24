@@ -1,0 +1,13 @@
+.build/
+.swiftpm/
+build/
+build-simulator/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+Config/Local.xcconfig
+.env
+*.p12
+*.mobileprovision
+*.ipa
+.DS_Store

@@ -1,0 +1,7 @@
+// Only needed for an Apple-signed installation / production Meta registration.
+// Copy to Local.xcconfig; never commit credentials or signing material.
+DEVELOPMENT_TEAM = YOUR_APPLE_TEAM_ID
+PRODUCT_BUNDLE_IDENTIFIER = YOUR_UNIQUE_BUNDLE_IDENTIFIER
+// Developer Mode allows META_APP_ID = 0. Production uses your Meta app settings.
+META_APP_ID = 0
+CLIENT_TOKEN =

@@ -1,0 +1,51 @@
+name: iOS build and core tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: macos-26
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
+      - name: Check generated project
+        run: |
+          python3 scripts/generate_project.py
+          git diff --exit-code -- MetaStudy.xcodeproj
+          plutil -lint App/Info.plist MetaStudy.xcodeproj/project.pbxproj
+      - name: Run recognition and API contract tests
+        run: swift test
+      - name: Build iPhone application without signing
+        run: >-
+          xcodebuild build
+          -project MetaStudy.xcodeproj
+          -scheme MetaStudy
+          -configuration Debug
+          -destination 'generic/platform=iOS'
+          -derivedDataPath build
+          CODE_SIGNING_ALLOWED=NO
+      - name: Build simulator application
+        run: >-
+          xcodebuild build
+          -project MetaStudy.xcodeproj
+          -scheme MetaStudy
+          -configuration Debug
+          -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath build-simulator
+          CODE_SIGNING_ALLOWED=NO
+      - name: Package unsigned build for inspection
+        run: ditto -c -k --keepParent build/Build/Products/Debug-iphoneos/MetaStudy.app build/MetaStudy-unsigned.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MetaStudy-unsigned-not-installable
+          path: build/MetaStudy-unsigned.zip
+          retention-days: 14
