@@ -4,6 +4,8 @@ An iPhone study app for Meta Ray-Ban Display glasses. After you tap **Start stud
 
 **This repository contains source code, not an installed iPhone app.** A signed build and physical-glasses testing are still required. An unsigned GitHub Actions artifact cannot be installed directly on an iPhone.
 
+**Verified:** 23 core tests passed, iPhone and simulator builds passed, and the simulator study screen was visually checked. [Build record](VALIDATION.md) · [App preview](docs/MetaStudy-preview.png).
+
 ## What is implemented
 
 - Meta DAT 1.0.1 camera and display capabilities attached to the **same DeviceSession**, with registration, camera permission, URL callbacks, lifecycle/error handling, readiness timeout, and frame-loss handling.
