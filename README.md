@@ -13,6 +13,7 @@ An iPhone study app for Meta Ray-Ban Display glasses. After you tap **Start stud
 - One AI request at a time, at least eight seconds between attempts, up to 64 cached results per session, and cancellation/invalidation when the view changes. Failed AI requests stop the study session instead of repeatedly charging the account.
 - Google Gemini structured answers with label validation, explanations, mnemonics, paginated lens cards, and optional iPhone speech output. The audio route depends on the phone's current output settings.
 - A **Practice image** source for testing OCR and AI with an image selected on the iPhone, without connected glasses.
+- If the glasses SDK cannot initialize (including in some simulator environments), the app opens in Practice image mode. It does not claim that the glasses are connected.
 - Personal API key entry in Settings, stored in the device-only Keychain. The key is not embedded in code or included in a URL.
 - Unit tests for parsing, steadiness, deduplication, cooldowns, stale completions, request construction, malformed model responses, and answer-label validation.
 

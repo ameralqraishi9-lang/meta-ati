@@ -11,3 +11,5 @@ Config/Local.xcconfig
 *.mobileprovision
 *.ipa
 .DS_Store
+__pycache__/
+*.pyc

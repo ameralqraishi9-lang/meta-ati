@@ -12,12 +12,7 @@ struct MetaStudyApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if let startupError {
-                ContentUnavailableView("Glasses setup failed", systemImage: "eyeglasses",
-                    description: Text(startupError))
-            } else {
-                StudyView()
-            }
+            StudyView(configurationError: startupError)
         }
     }
 }

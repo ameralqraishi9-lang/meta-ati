@@ -22,8 +22,17 @@ if device["state"] != "Booted":
 run("xcrun", "simctl", "bootstatus", udid, "-b", timeout=300)
 app = "build-simulator/Build/Products/Debug-iphonesimulator/MetaStudy.app"
 run("xcrun", "simctl", "install", udid, app)
-print(run("xcrun", "simctl", "launch", udid, "com.metatistudy.MetaStudy"))
-time.sleep(4)
+container = Path(run("xcrun", "simctl", "get_app_container", udid, "com.metatistudy.MetaStudy", "data"))
+marker = container / "Library" / "Caches" / "meta-study-ui-ready"
+marker.unlink(missing_ok=True)
+print(run("xcrun", "simctl", "launch", udid, "com.metatistudy.MetaStudy", "--smoke-test"))
+for _ in range(30):
+    if marker.exists():
+        break
+    time.sleep(1)
+else:
+    raise SystemExit("StudyView did not become ready within 30 seconds.")
+time.sleep(2)
 Path("build").mkdir(exist_ok=True)
 run("xcrun", "simctl", "io", udid, "screenshot", "build/MetaStudy-preview.png")
-print("Simulator launch completed; review MetaStudy-preview.png for the initial UI.")
+print("StudyView readiness confirmed; review MetaStudy-preview.png for the initial UI.")

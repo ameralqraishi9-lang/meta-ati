@@ -22,8 +22,8 @@ final class MetaGlassesController: ObservableObject {
 
     var onFrame: ((UIImage, Bool) -> Void)?
     var onUnavailable: (() -> Void)?
-    private let wearables = Wearables.shared
-    private var selector: AutoDeviceSelector
+    private let wearables: (any WearablesInterface)?
+    private var selector: AutoDeviceSelector?
     private var session: DeviceSession?
     private var camera: Camera?
     private var display: Display?
@@ -41,8 +41,18 @@ final class MetaGlassesController: ObservableObject {
     private var capturePending = false
     private var photoTimeoutTask: Task<Void, Never>?
 
-    init() {
-        selector = AutoDeviceSelector(wearables: Wearables.shared, filter: { $0.supportsDisplay() })
+    init(configurationError: String? = nil) {
+        // Imported-image study must work even if the device SDK cannot initialize.
+        // Never touch Wearables.shared after a failed configure() call.
+        if let configurationError {
+            wearables = nil
+            selector = nil
+            displayStatus = "Glasses unavailable: \(configurationError)"
+            return
+        }
+        let wearables = Wearables.shared
+        self.wearables = wearables
+        selector = AutoDeviceSelector(wearables: wearables, filter: { $0.supportsDisplay() })
         registered = wearables.registrationState == .registered
         observationTasks.append(Task { [weak self, wearables] in
             for await state in wearables.registrationStateStream() {
@@ -63,11 +73,13 @@ final class MetaGlassesController: ObservableObject {
     }
 
     func register() async {
+        guard let wearables else { showUnavailable(); return }
         do { try await wearables.startRegistration() }
         catch { errorMessage = error.localizedDescription }
     }
 
     func grantCamera() async {
+        guard let wearables else { showUnavailable(); return }
         do {
             guard try await wearables.requestPermission(.camera) == .granted else {
                 errorMessage = "Camera access was not granted in Meta AI."
@@ -77,6 +89,7 @@ final class MetaGlassesController: ObservableObject {
     }
 
     func handleURL(_ url: URL) async {
+        guard let wearables else { return }
         guard url.scheme == "metatistudy",
               URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?
                 .contains(where: { $0.name == "metaWearablesAction" }) == true else { return }
@@ -85,6 +98,7 @@ final class MetaGlassesController: ObservableObject {
     }
 
     func connect() async {
+        guard let wearables, let selector else { showUnavailable(); return }
         guard session == nil, !connecting else { return }
         errorMessage = nil
         do {
@@ -304,11 +318,13 @@ final class MetaGlassesController: ObservableObject {
     }
 
     func updateGlassesApp() async {
+        guard let wearables else { showUnavailable(); return }
         do { try await wearables.openDATGlassesAppUpdate() }
         catch { errorMessage = error.localizedDescription }
     }
 
     func updateFirmware() async {
+        guard let wearables else { showUnavailable(); return }
         do { try await wearables.openFirmwareUpdate() }
         catch { errorMessage = error.localizedDescription }
     }
@@ -331,6 +347,10 @@ final class MetaGlassesController: ObservableObject {
         cardPages = []; pendingCard = nil
         displayStatus = "Lens not connected"
         onUnavailable?()
+    }
+
+    private func showUnavailable() {
+        errorMessage = "Glasses setup is unavailable in this environment. Use Practice image, or restart a signed build on your iPhone with Meta AI installed."
     }
 
     private enum ConnectionError: LocalizedError {

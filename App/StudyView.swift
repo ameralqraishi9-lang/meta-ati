@@ -4,7 +4,7 @@ import MetaStudyCore
 
 @MainActor
 struct StudyView: View {
-    @StateObject private var glasses = MetaGlassesController()
+    @StateObject private var glasses: MetaGlassesController
     @StateObject private var study = StudyController()
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("geminiModel") private var model = GeminiStudyClient.defaultModel
@@ -14,6 +14,11 @@ struct StudyView: View {
     @State private var photo: PhotosPickerItem?
     @State private var importedImage: UIImage?
     @State private var imageTask: Task<Void, Never>?
+
+    init(configurationError: String? = nil) {
+        _glasses = StateObject(wrappedValue: MetaGlassesController(configurationError: configurationError))
+        _source = State(initialValue: configurationError == nil ? "Glasses" : "Practice image")
+    }
 
     var body: some View {
         NavigationStack {
@@ -114,6 +119,13 @@ struct StudyView: View {
                 study.onCard = { title, body in glasses.show(title, body: body) }
                 study.onAnswer = { answer in glasses.show(answer) }
                 study.onNewQuestion = { if source == "Glasses" { glasses.captureStill() } }
+                #if DEBUG
+                if ProcessInfo.processInfo.arguments.contains("--smoke-test"),
+                   let cache = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first {
+                    try? "ready".write(to: cache.appendingPathComponent("meta-study-ui-ready"),
+                                       atomically: true, encoding: .utf8)
+                }
+                #endif
             }
         }.tint(.mint).preferredColorScheme(.dark)
     }
